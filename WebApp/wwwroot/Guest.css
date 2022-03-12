@@ -1,0 +1,12 @@
+﻿#kt_aside{
+    visibility:collapse !important;
+}
+#kt_wrapper{
+    padding:0px!important;
+}
+#kt_header {
+    visibility: collapse !important;
+}
+#header_ktcontainer {
+    padding: 25px!important;
+}

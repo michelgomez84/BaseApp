@@ -1,0 +1,39 @@
+﻿@page "/"
+@layout BackendLayout
+@inject IJSRuntime JS
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
+    <div class="kt-subheader  kt-grid__item" id="kt_subheader">
+        <div class="kt-container  kt-container--fluid ">
+            <div class="kt-subheader__main">
+                <h3 class="kt-subheader__title">
+                    <NavLink href='' class="kt-subheader__breadcrumbs-link">
+                        DashBoard
+                    </NavLink>
+                </h3>
+                
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+        }
+        return base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected async Task ShowMessage()
+    {
+        await JS.InvokeVoidAsync("ShowMessage", "Hello Testing JS");
+    }
+
+}

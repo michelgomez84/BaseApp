@@ -1,0 +1,369 @@
+﻿@page "/categories"
+@layout BackendLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+@inject ICategoryService MainService
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+
+<div class="kt-content  kt-grid__item kt-grid__item--fluid kt-grid kt-grid--hor" id="kt_content">
+    <div class="kt-subheader  kt-grid__item" id="kt_subheader">
+        <div class="kt-container  kt-container--fluid ">
+            <div class="kt-subheader__main">
+                <h3 class="kt-subheader__title">
+                    <NavLink href='categories' class="kt-subheader__breadcrumbs-link">
+                        Categories
+                    </NavLink>
+                </h3>
+                @*@if (Action == "create" || Action == "edit")
+                    {
+                        <span class="kt-subheader__separator kt-subheader__separator--v"></span>
+                        <div class="kt-subheader__breadcrumbs">
+                            <NavLink href="javascript:void(0)" class="kt-subheader__breadcrumbs-link">
+                                @(Id > 0? "Editar":"Nuevo")
+                            </NavLink>
+                            <span class="kt-subheader__breadcrumbs-separator"></span>
+                        </div>
+                    }*@
+            </div>
+        </div>
+    </div>
+
+    @if (ModelData != null)
+    {
+        <div class="kt-container  kt-container--fluid  kt-grid__item kt-grid__item--fluid">
+
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="kt-portlet">
+                        <div class="kt-portlet__head">
+                            <div class="kt-portlet__head-label">
+                                <h3 class="kt-portlet__head-title">
+                                    Main View
+                                </h3>
+                            </div>
+                            <div class="kt-portlet__head-toolbar">
+                                <div class="dropdown dropdown-inline">
+                                    <button type="button" class="btn btn-hover-brand btn-elevate-hover btn-icon btn-sm btn-icon-md" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="flaticon-more"></i>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <a href='/categories' class="dropdown-item"><i class="fa fa-random"></i>Refresh</a>
+                                        <a href="javascript:void(0)" class="dropdown-item" @onclick="() => OnEdit(0)" data-toggle="modal" data-target="#modal_createedit"><i class="fa fa-plus"></i>Add New</a>
+                                    </div>
+                                </div>                                
+                            </div>
+                        </div>
+
+                        <EditForm Model="@ModelData" OnValidSubmit="OnFilter" class="kt-form kt-form--label-right">
+                            <DataAnnotationsValidator />
+
+                            <div class="kt-portlet__body">
+                                <div class="form-group row">
+                                    <div class="col-lg-4">
+                                        <label>Search</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" @bind="ModelData.Filter" name="Filter" />
+                                            <div class="input-group-append">
+                                                <button type="submit" class="btn btn-secondary"><i class="fa fa-search"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>                                    
+                                </div>
+                            </div>
+                        </EditForm>
+
+                        <!--end::Form-->
+                    </div>
+                </div>
+            </div>
+
+            @if (ModelData.Ldata != null && ModelData.Ldata.Count > 0)
+            {
+                <div class="row">
+                    <div class="col-xl-12">
+
+                        <!--begin::Portlet-->
+                        <div class="kt-portlet">
+                            <div class="kt-portlet__head">
+                                <div class="kt-portlet__head-label">
+                                    <h3 class="kt-portlet__head-title">
+                                        Categories List
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="kt-portlet__body">
+
+                                <!--begin::Section-->
+                                <div class="kt-section">
+                                    <div class="kt-section__content table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Description</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var dt in ModelData.Ldata)
+                                                {
+                                                    <tr>
+                                                        <td scope="row">@dt.Name</td>
+                                                        <td scope="row">@dt.Description</td>
+                                                        <td style="text-align:right">
+                                                            <div class="btn-group">
+                                                                <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions</button>
+                                                                <div class="dropdown-menu">
+                                                                    <a class="dropdown-item" href="javascript:void(0)" @onclick="() => OnEdit(dt.Id)" data-toggle="modal" data-target="#modal_createedit" data-ktportlet-tool="edit"><i class="fa fa-edit"></i>Edit</a>
+                                                                    <a class="dropdown-item" href="javascript:void(0)" @onclick="() => OnDelete(dt.Id)" data-toggle="modal" data-target="#modal_delete" data-ktportlet-tool="delete"><i class="fa fa-trash"></i>Delete</a>                                                                    
+                                                                </div>
+                                                            </div> 
+                                                            <!-- /btn-group -->
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!--end::Section-->
+
+                            </div>
+                            <div class="kt-portlet__foot">
+                                <BlazorPager CurrentPage="@(ModelData.PagIdx + 1)"
+                                             PageCount="@ModelData.Total"
+                                             VisiblePages="@(ModelData.PagesCount>3?3:ModelData.PagesCount)"
+                                             ShowFirstLast="true"
+                                             ShowPageNumbers="true"
+                                             FirstText="&laquo;"
+                                             LastText="&raquo;"
+                                             NextText="&rsaquo;"
+                                             PreviousText="&lsaquo;"
+                                             OnPageChanged="(async e => { await OnPagingChange(e);})">
+                                </BlazorPager>
+                            </div>
+                            <!--end::Form-->
+                        </div>
+
+                        <!--end::Portlet-->
+
+                    </div>
+                </div>
+
+            }
+
+        </div>
+
+        <!-- Modal Creat/Edit -->
+        <div class="modal fade" id="modal_createedit" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">@(ModelData.Data.Id > 0? "Edit Section" : "New Section")</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                        <!--begin::Portlet-->
+                        <div class="kt-portlet" style="margin-bottom:0px !important;">
+
+                            <EditForm Model="@ModelData.Data" OnValidSubmit="SaveData" class="kt-form kt-form--label-right">
+                                <DataAnnotationsValidator />
+                                @*<ValidationSummary />*@
+                            <div class="kt-portlet__body">
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <div>
+                                            <label>Name</label>
+                                            <input type="text" class="form-control" @bind="ModelData.Data.Name" name="Name" />
+                                            <p class="invalid"><ValidationMessage For=@(() => ModelData.Data.Name) /></p>
+                                            
+                                            <input type="hidden" class="form-control" @bind="ModelData.Data.Id" name="Id" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12">
+                                       <div>
+                                          <label>Description</label>
+                                          <textarea rows="4" class="form-control" @bind="ModelData.Data.Description">@ModelData.Data.Description</textarea>
+                                       </div>
+                                    </div>                                    
+                                </div>                                    
+                                </div>
+
+                                <div class="kt-portlet__foot" style="padding:10px!important">
+                                    <div class="kt-form__actions text-right">
+
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close" @onclick="Cancel" id="btnCloseSaveModal">Cancel</button>
+
+                                        <button type="submit" class="btn btn-primary">Save</button>
+
+                                    </div>
+                                </div>
+                            </EditForm>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="modal_delete" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Confirm Deletion</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                        <!--begin::Portlet-->
+                        <div class="kt-portlet" style="margin-bottom:0px !important;">
+
+                            <div class="kt-portlet__body">
+                                <div class="form-group row">
+                                    <div class="col-lg-12">
+                                        <div>
+                                            <h5>Are you sure you want to delete selected item?</h5>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="kt-portlet__foot" style="padding:10px!important">
+                                <div class="kt-form__actions text-right">
+                                    <button type="button" class="btn btn-md btn-secondary" data-dismiss="modal" aria-label="Close">No</button>
+
+                                    <button type="button" class="btn btn-md btn-primary" data-dismiss="modal" @onclick="DeleteData">Yes</button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+    }
+
+
+</div>
+
+@code {
+       
+    protected GenericModel<DataModel.Category> ModelData = null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ModelData = new GenericModel<DataModel.Category>();
+
+        await UpdateData();
+        await FetchData();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+
+    }
+
+    protected async Task FetchData()
+    {
+        //Title = "Gateways List";
+        ModelData.ErrorMsg = null;
+        ModelData.Data = new DataModel.Category();
+        
+        ModelData.Ldata = await MainService.FindAll(ModelData.Filter, ModelData.PagIdx, ModelData.PagAmt);
+        ModelData.Total = ModelData.Ldata?.Count??0;
+        StateHasChanged();
+    }
+
+    protected async Task SaveData()
+    {
+        var result = await MainService.Save(ModelData.Data);
+        if (result != null)
+        {
+            await JsRuntime.InvokeVoidAsync("ShowMessage", "data has been saved successfully");
+            //UrlNavigationManager.NavigateTo("/warehouse/brands/fetch");
+            await JsRuntime.InvokeVoidAsync("OpenCloseModal", "#btnCloseSaveModal");
+
+            await FetchData();
+        }
+        else
+            await JsRuntime.InvokeVoidAsync("ShowError", "data could not be saved");
+    }
+
+    protected async Task DeleteData()
+    {
+        var result = await MainService.Delete(ModelData.Data.Id);
+        if (result != null)
+        {
+            await JsRuntime.InvokeVoidAsync("ShowMessage", "data has been deleted successfully");
+            //UrlNavigationManager.NavigateTo("/warehouse/brands/fetch");
+
+            await JsRuntime.InvokeVoidAsync("OpenCloseModal", "#btnCloseDeleteModal");
+
+            await FetchData();
+        }
+        else
+            await JsRuntime.InvokeVoidAsync("ShowError", "data could not be deleted");
+    }
+
+    protected async Task Cancel()
+    {
+        await FetchData();
+    }
+
+    protected async Task OnPagingChange(int pIndex)
+    {
+        if (ModelData.PagesCount < pIndex)
+            return;
+
+        ModelData.PagIdx = pIndex - 1;
+
+        await FetchData();
+    }
+
+    protected async Task OnFilter()
+    {
+        ModelData.PagIdx = 0;
+
+        await FetchData();
+    }
+
+    /// <summary>
+    /// /////////////
+    /// </summary>
+
+    private async Task OnEdit(long id)
+    {
+        var result = await MainService.Get(id);
+        if (result == null)
+        {
+            result = new DataModel.Category();
+        }
+
+        ModelData.Data = result;
+
+        StateHasChanged();
+    }
+
+    private async Task OnDelete(long id)
+    {
+        ModelData.Data = new DataModel.Category() { Id = id };
+
+        StateHasChanged();
+    }
+   
+    protected async Task UpdateData()
+    {
+        StateHasChanged();
+    }
+
+    
+}

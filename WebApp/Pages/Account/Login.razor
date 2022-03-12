@@ -1,0 +1,131 @@
+﻿@page "/login"
+@layout AccountLayout
+@attribute [AllowAnonymous]
+@inject NavigationManager navigationManager
+@inject UserManager<ApplicationUser> userManager
+@inject SignInManager<ApplicationUser> signInManager
+@*@inject IAuthService authService*@
+
+<div class="kt-login__signin">
+    <div class="kt-login__head">
+        <h3 class="kt-login__title">Sign In</h3>
+    </div>
+    <EditForm id="loginform" class="kt-form" OnValidSubmit="OnLogin" Model="loginRequest">
+        <div class="input-group">
+            <InputText class="form-control" type="text" autocomplete="off" placeholder="User Name" name="UserName" @bind-Value="loginRequest.UserName" />
+            <ValidationMessage For="@(() => loginRequest.UserName)" />
+        </div>
+        <div class="input-group">
+            <InputText class="form-control" type="password" autocomplete="off" placeholder="Password" name="Password" @bind-Value="loginRequest.Password" />
+            <ValidationMessage For="@(() => loginRequest.Password)" />
+        </div>
+        <div class="input-group">
+            <label class="text-danger">@error</label>
+        </div>
+        <div class="row kt-login__extra">
+            <div class="col">
+                <label class="kt-checkbox">
+                    <InputCheckbox type="checkbox" name="remember" @bind-Value="loginRequest.RememberMe" /> Remember me
+                    <span></span>
+                </label>
+            </div>
+            @*<div class="col kt-align-right">
+                    <NavLink href="javascript:;" id="kt_login_forgot" class="kt-login__link">Forget Password ?</NavLink>
+                </div>
+                <div class="col kt-align-right">
+                    <NavLink href="javascript:;" id="kt_login_forgot" class="kt-login__link">Create Account</NavLink>
+                </div>*@
+        </div>
+        <div class="kt-login__actions">
+            <button id="kt_login_signin_submit" class="btn btn-brand btn-pill kt-login__btn-primary" type="submit">Sign In</button>
+        </div>
+    </EditForm>
+</div>
+
+
+@code{ 
+
+    [CascadingParameter]
+    protected Task<AuthenticationState> AuthStat { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+        var user = (await AuthStat).User;
+        if (user.Identity.IsAuthenticated)
+        {
+            navigationManager.NavigateTo($"/",true);
+        }
+    }
+
+    LoginModel loginRequest { get; set; } = new LoginModel();
+    string error { get; set; }
+
+
+    async Task OnLogin()
+    {
+        error = null;
+        try
+        {
+            var usr = await userManager.FindByNameAsync(loginRequest.UserName);
+            if (usr == null)
+            {
+                error = "Login failed. Check your username and password.";
+                return;
+            }
+
+
+            if (await signInManager.CanSignInAsync(usr))
+            {
+                var result = await signInManager.CheckPasswordSignInAsync(usr, loginRequest.Password, true);
+                if (result.Succeeded)
+                {
+                    Guid key = BlazorCookieLoginMiddleware<ApplicationUser>.AnnounceLogin(loginRequest);
+                    navigationManager.NavigateTo($"/login?key={key}", true);
+
+                    //navigationManager.NavigateTo("");
+                }
+                else
+                {
+                    error = "Login failed. Check your username and password.";
+                }
+            }
+            else
+            {
+                error = "Your account is blocked";
+
+            }
+
+            //var result = await signInManager.PasswordSignInAsync(loginRequest.UserName, loginRequest.Password, loginRequest.RememberMe, lockoutOnFailure: false);
+            //if (result.Succeeded)
+            //{
+            //    navigationManager.NavigateTo("");
+            //}
+            //if (result.RequiresTwoFactor)
+            //{
+            //    error = "user recuired ltwo factor login"; return;
+            //}
+            //if (result.IsLockedOut)
+            //{
+            //    error = "user account locked out"; return;
+            //}
+            //else
+            //{
+            //    error = "invalid username or password"; return;
+            //}
+
+            ////var user = await userManager.FindByNameAsync(loginRequest.UserName);
+            ////if (user == null) { error = "user does not exist"; return; }
+
+            ////var singInResult = await signInManager.CheckPasswordSignInAsync(user, loginRequest.Password, false);
+            ////if (!singInResult.Succeeded) { error = "invalid password"; return; }
+
+            ////await signInManager.SignInAsync(user, loginRequest.RememberMe);
+            //navigationManager.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    } }
+
